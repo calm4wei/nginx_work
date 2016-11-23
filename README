@@ -1,0 +1,5 @@
+Openresty combine with lua
+
+function as follow:
+~ receive data from post, and write to file.
+~ lua disposes the data format, and so on.

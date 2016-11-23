@@ -1,0 +1,36 @@
+module("logger", package.seeall)
+
+local ffi = require("ffi")
+ffi.cdef[[
+int open(const char *pathname, int flags, int mode);
+int write(int handle, const void *buf, int nbyte);
+int close(int fd);
+
+static const int O_RDWR   = 02;
+static const int O_CREAT  = 0100;
+static const int O_APPEND = 02000;
+static const int S_IRUSR  = 00400;
+static const int S_IWUSR  = 00200;
+static const int S_IRGRP  = 00040;
+static const int S_IROTH  = 00004;
+]]
+
+local logger_handle = -1
+local local_log_file = ""
+function info(log_file, msg)
+  if log_file ~= nil and log_file ~= "" then
+    if local_log_file ~= log_file then
+      if logger_handle ~= -1 then
+        ffi.C.close(logger_handle)
+      end
+      local_log_file = log_file
+      logger_handle = ffi.C.open(local_log_file, bit.bor(ffi.C.O_RDWR, ffi.C.O_CREAT, ffi.C.O_APPEND), bit.bor(ffi.C.S_IRUSR, ffi.C.S_IWUSR, ffi.C.S_IRGRP, ffi.C.S_IROTH))
+    end
+    -- line = ngx.localtime() .. "|" .. ngx.var.remote_addr .. "|" .. msg .. "\n"
+    line = msg .. "\n"
+    ffi.C.write(logger_handle, line, line:len())
+  else
+    ngx.say("log_file is nil or empty")
+  end
+end
+
